@@ -10,6 +10,8 @@ struct Location
 	double latitude, longitude;
 };
 
+void transmit(char* message);
+
 /* Function loads all the locations from a given locations file.
  * locations should be in the following format:
  *
@@ -22,5 +24,7 @@ struct Location
  * there should be a line separating entries.
  */
 void load_locations(char* path, struct Location** loc, int* size);
+
+void unload_locations(struct Location* loc);
 
 #endif

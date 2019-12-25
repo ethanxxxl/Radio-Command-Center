@@ -15,13 +15,9 @@
 
 #include <math.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <sys/wait.h>
 #include <parser.h>
-#include <stdarg.h>
-#include <errno.h>
+#include <extraction_game.h>
 
 double find_distance(struct Location  A, struct Location B)
 {
@@ -41,32 +37,6 @@ double find_distance(struct Location  A, struct Location B)
 	return distance;
 }
 
-void transmit(char* message)
-{
-	int pid = fork();
-
-	
-	if ( pid == 0 )
-	{
-		// ironically, espeak is too verbose, and this is the only way to make it shut up.
-		fclose(stderr);
-
-		// arguments for espeak
-		char *args[] = {"espeak", message, "-ven-us", NULL};
-
-		// run the espeak
-		execvp(args[0], args);
-		
-		// exit successfully (from this fork)
-		exit(EXIT_SUCCESS);
-	}
-	else
-	{
-		// wait for espeak to finish up before continuing.
-		// also makes sure that there are no zombie processes.
-		wait(NULL);
-	}
-}
 
 // creates a spawnpoint, given a target location, and some restrictions.
 int find_spawn(struct Location* locs, int size, int target, int enemy_spawn, double max_distance)
@@ -118,17 +88,7 @@ int find_spawn(struct Location* locs, int size, int target, int enemy_spawn, dou
 
 int main(void)
 {
-	struct Location* locs;
-	int loc_size;
-	load_locations("./locations.txt", &locs, &loc_size);
-
-	for (int i =0; i < loc_size; i++)
-	{
-		printf("%s\n%s\n", locs[i].name, locs[i].description);
-		transmit(locs[i].name);
-		transmit(locs[i].description);
-	}
-	free(locs);
+	extraction_game(1.0f, 4);
 
 	return 0;
 }

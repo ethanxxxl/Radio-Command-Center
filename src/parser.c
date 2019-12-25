@@ -2,8 +2,36 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
+// TODO make this take unlimited arguments, and splice them all together.
+void transmit(char* message)
+{
+	int pid = fork();
 
+	
+	if ( pid == 0 )
+	{
+		// ironically, espeak is too verbose, and this is the only way to make it shut up.
+		fclose(stderr);
+
+		// arguments for espeak
+		char *args[] = {"espeak", message, "-ven-us", NULL};
+
+		// run the espeak
+		execvp(args[0], args);
+		
+		// exit successfully (from this fork)
+		exit(EXIT_SUCCESS);
+	}
+	else
+	{
+		// wait for espeak to finish up before continuing.
+		// also makes sure that there are no zombie processes.
+		wait(NULL);
+	}
+}
 
 void load_locations(char* path, struct Location** locations, int* size)
 {
@@ -43,4 +71,9 @@ void load_locations(char* path, struct Location** locations, int* size)
 
 	// close the locations file
 	fclose(locations_file);
+}
+
+void unload_locations(struct Location* loc)
+{
+	free(loc);
 }
