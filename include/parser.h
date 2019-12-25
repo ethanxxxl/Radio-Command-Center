@@ -10,7 +10,11 @@ struct Location
 	double latitude, longitude;
 };
 
-void transmit(char* message);
+/*
+ * this will concatenate all of its parameters (they must be char*), and then
+ * transmit it. The last parameter MUST be NULL.
+ */
+void transmit(char* message, ...);
 
 /* Function loads all the locations from a given locations file.
  * locations should be in the following format:

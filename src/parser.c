@@ -4,23 +4,62 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <stdarg.h>
 
-// TODO make this take unlimited arguments, and splice them all together.
-void transmit(char* message)
+// the last parameter MUST be NULL
+void transmit(char* message, ...)
 {
 	int pid = fork();
 
-	
 	if ( pid == 0 )
 	{
+		va_list ap;
+		va_start(ap, message);
+
+		// calculate the total size of the resultant strung, so we
+		// know how much memory to allocate
+		int total_length = 0;
+		total_length += strlen(message);
+		for (;;)
+		{
+			char* c = va_arg(ap, char*);
+			if ( c == NULL )
+				break;
+			else
+				total_length += strlen(c);
+		}
+
+		// restart ap
+		va_end(ap);
+		va_start(ap, message);
+
+		// create the buffer
+		char* buff = malloc(total_length*sizeof(char));
+
+		// concatenate the string
+		strcat(buff, message);
+		for (;;)
+		{
+			char *c = va_arg(ap, char*);
+			if ( c == NULL )
+				break;
+			else
+				strcat(buff, c);
+		}
+		
+		va_end(ap);
+
+		// arguments for espeak
+		char *args[] = {"espeak", buff, "-ven-us", NULL};
+
 		// ironically, espeak is too verbose, and this is the only way to make it shut up.
 		fclose(stderr);
 
-		// arguments for espeak
-		char *args[] = {"espeak", message, "-ven-us", NULL};
-
 		// run the espeak
 		execvp(args[0], args);
+
+		// memory leaks are bad
+		free(buff);
 		
 		// exit successfully (from this fork)
 		exit(EXIT_SUCCESS);
