@@ -40,7 +40,7 @@ void transmit(char* message, ...)
 		strcat(buff, message);
 		for (;;)
 		{
-			char *c = va_arg(ap, char*);
+			char* c = va_arg(ap, char*);
 			if ( c == NULL )
 				break;
 			else
@@ -72,6 +72,39 @@ void transmit(char* message, ...)
 	}
 }
 
+// this allocates memory pointed to by buff, and fills it in the next line
+// in a file
+static char* allocate_and_read(FILE* locs_file, char** buff)
+{
+	// find the size of the line.
+	int count = 0;
+	for (;;)
+	{
+		// increments before the test, because there needs to be
+		// at least one memory space for a \0
+		count++;
+		char c = fgetc(locs_file);
+
+		// go until it comes across an EOF or newline
+		if ( c == EOF || c == '\n' )
+			break;
+	}
+
+	// push back count places
+	fseek(locs_file, -(count), SEEK_CUR);
+
+	// allocate memory for the buffer. this is freed in the unload_locations function
+	*buff = malloc(count * sizeof(char));
+
+	// this shouldn't get to any \n or EOF, because it should be one less
+	fgets(*buff, count, locs_file);
+
+	// move to the next line
+	fseek(locs_file, 1L, SEEK_CUR);
+
+	return *buff;
+}
+
 void load_locations(char* path, struct Location** locations, int* size)
 {
 	// open the locations file
@@ -85,34 +118,59 @@ void load_locations(char* path, struct Location** locations, int* size)
 		if ( c == '\n' ) (*size)++;
 	}
 	*size = (*size)/4;
+
 	rewind(locations_file);
 
 	// allocate memory for the locations list
 	// the size is divided by four because 4 lines correspond to one entry
-	*locations = malloc(*size);
+	*locations = malloc(*size * sizeof(struct Location));
 
+	// fill in the structure
 	for (int i=0; i < *size; i++)
 	{
-		// TODO so, these need to be changed to char*. they will make your life easier.
-		// get the name and description strings
-		fgets((*locations)[i].name, MESSAGE_LENGTH, locations_file);
-		fgets((*locations)[i].description, MESSAGE_LENGTH, locations_file);
+		allocate_and_read(locations_file, &(*locations)[i].name);
+		allocate_and_read(locations_file, &(*locations)[i].description);
 
-		strtok((*locations)[i].name, "\n");
-		strtok((*locations)[i].description, "\n");
+		// because the coordinates are on the same line, they need to be split
+		// up.
+		char* temp1, * temp2;
+		allocate_and_read(locations_file, &temp1);
+		temp1 = strtok(temp1, " ");
+		temp2 = strtok(NULL, " ");
 
-		// get the latitude and longitude
-		fscanf(locations_file, "%lf%lf", &(*locations)[i].latitude, &(*locations)[i].longitude);
+		// find the size of each coordinate
+		int size_x = strlen(temp1);
+		int size_y = strlen(temp2);
 
-		// move past the whitespace
-		fseek(locations_file, sizeof(char)*2, SEEK_CUR);
+		// allocate space in the struct for the coordinates
+		(*locations)[i].x = malloc(sizeof(char)*size_x);
+		(*locations)[i].y = malloc(sizeof(char)*size_y);
+
+		// copy the strings from the temporary locations into the struct
+		strcpy((*locations)[i].x, temp1);
+		strcpy((*locations)[i].y, temp2);
+
+		// temp1 should still point to the original location in memory.
+		free(temp1);
+
+		fseek(locations_file, 1L, SEEK_CUR);
 	}
 
 	// close the locations file
 	fclose(locations_file);
 }
 
-void unload_locations(struct Location* loc)
+// goes through and frees all the memory that is contained in
+// all of the structs, and then frees the memory containing the struct list
+void unload_locations(struct Location* loc, int size)
 {
+	for ( int i=0; i < size; i++ )
+	{
+		free(loc[i].name);
+		free(loc[i].description);
+		free(loc[i].x);
+		free(loc[i].y);
+	}
+
 	free(loc);
 }

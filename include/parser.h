@@ -5,15 +5,12 @@
 
 struct Location
 {
-	char name[MESSAGE_LENGTH];
-	char description[MESSAGE_LENGTH];
-	double latitude, longitude;
+	char* name;
+	char* description;
+	char* x;
+	char* y;
 };
 
-/*
- * this will concatenate all of its parameters (they must be char*), and then
- * transmit it. The last parameter MUST be NULL.
- */
 void transmit(char* message, ...);
 
 /* Function loads all the locations from a given locations file.
@@ -29,6 +26,9 @@ void transmit(char* message, ...);
  */
 void load_locations(char* path, struct Location** loc, int* size);
 
-void unload_locations(struct Location* loc);
+/* Unloads the array of locations given by loc
+ * 
+ */
+void unload_locations(struct Location* loc, int size);
 
 #endif
