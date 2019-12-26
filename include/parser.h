@@ -1,8 +1,6 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#define MESSAGE_LENGTH 256
-
 struct Location
 {
 	char* name;

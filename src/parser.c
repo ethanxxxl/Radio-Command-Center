@@ -34,7 +34,7 @@ void transmit(char* message, ...)
 		va_start(ap, message);
 
 		// create the buffer
-		char* buff = malloc(total_length*sizeof(char));
+		char* buff = calloc(total_length, sizeof(char));
 
 		// concatenate the string
 		strcat(buff, message);
@@ -50,7 +50,7 @@ void transmit(char* message, ...)
 		va_end(ap);
 
 		// arguments for espeak
-		char *args[] = {"espeak", buff, "-ven-us", NULL};
+		char *args[] = {"espeak", buff, "-ven-us", "-s150", "-p20", NULL};
 
 		// ironically, espeak is too verbose, and this is the only way to make it shut up.
 		fclose(stderr);
@@ -60,6 +60,7 @@ void transmit(char* message, ...)
 
 		// memory leaks are bad
 		free(buff);
+
 		
 		// exit successfully (from this fork)
 		exit(EXIT_SUCCESS);
