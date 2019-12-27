@@ -17,4 +17,6 @@ set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(run ${SRC})
 
-target_link_libraries(run m)
+set_property(TARGET run PROPERTY C_STANDARD 99)
+
+target_link_libraries(run m wiringPi)

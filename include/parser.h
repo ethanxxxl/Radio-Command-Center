@@ -1,6 +1,8 @@
 #ifndef PARSER_H
 #define PARSER_H
 
+#define TRIGGER 14
+
 struct Location
 {
 	char* name;

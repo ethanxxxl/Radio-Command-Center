@@ -6,6 +6,8 @@
 #include <sys/wait.h>
 #include <stdarg.h>
 
+#include <wiringPi.h>
+
 // the last parameter MUST be NULL
 void transmit(char* message, ...)
 {
@@ -49,19 +51,53 @@ void transmit(char* message, ...)
 		
 		va_end(ap);
 
-		// arguments for espeak
-		char *args[] = {"espeak", buff, "-ven-us", "-s150", "-p20", NULL};
 
-		// ironically, espeak is too verbose, and this is the only way to make it shut up.
-		fclose(stderr);
+		int fd[2];
+		pipe(fd);
 
-		// run the espeak
-		execvp(args[0], args);
+		pid_t pid2 = fork();
+
+		if ( pid2 == 0 )
+		{
+			close(fd[0]);
+			dup2(fd[1], 1);
+
+			// arguments for espeak
+			char *args[] = {"espeak", buff, "-ven-us", "-s150", "-p20", "--stdout", NULL};
+
+			// ironically, espeak is too verbose, and this is the only way to make it shut up.
+			fclose(stderr);
+
+			// run the espeak
+			execvp(args[0], args);
+
+			wait(NULL);
+		}
+		else
+		{
+			// close the unused file descriptor
+			close(fd[1]);
+
+			// remap STDIN for this process to the pipe
+			dup2(fd[0], 0);
+
+			// args for the command
+			char *argv[] = {"aplay", "-r 48", NULL};
+
+			digitalWrite(TRIGGER, HIGH);
+			// execute the command
+			execvp(argv[0], argv);
+			digitalWrite(TRIGGER, LOW);
+			// check for errors
+
+			// close the other half of pipe before exiting.
+			close(fd[0]);
+			exit(EXIT_SUCCESS);
+		}
 
 		// memory leaks are bad
 		free(buff);
 
-		
 		// exit successfully (from this fork)
 		exit(EXIT_SUCCESS);
 	}

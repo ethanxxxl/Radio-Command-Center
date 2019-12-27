@@ -18,6 +18,8 @@
 #include <stdlib.h>
 #include <parser.h>
 #include <extraction_game.h>
+#include <unistd.h>
+#include <wiringPi.h>
 
 //double find_distance(struct Location  A, struct Location B)
 //{
@@ -88,18 +90,9 @@
 
 int main(void)
 {
-	//extraction_game(1.0f, 4);
+	wiringPiSetup();
+	pinMode(TRIGGER, OUTPUT);
+	extraction_game(1.0f, 5);
 
-	struct Location* locs;
-	int locs_size;
-
-	load_locations("./locations.txt", &locs, &locs_size);
-
-	for ( int i=0; i < locs_size; i++ )
-	{
-		printf("name: %s\ndesc: %s\nx: %s\ny: %s\n\n", locs[i].name, locs[i].description, locs[i].x, locs[i].y);
-	}
-
-	unload_locations(locs, locs_size);
 	return 0;
 }
